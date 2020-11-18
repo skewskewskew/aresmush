@@ -10,7 +10,7 @@ module AresMUSH
         error = Website.check_login(request)
         return error if error
         
-        if (!Manage.can_manage_game?(enactor))
+        if (!Website.can_manage_textfile?(enactor, file_type))
           return { error: t('dispatcher.not_allowed') }
         end
         
@@ -47,7 +47,7 @@ module AresMUSH
             error = Manage.reload_config     
             if (error)
               Global.logger.warn "Trouble loading YAML config: #{error}"
-              return { error: t('manage.game_config_invalid', :error => error) }
+              return { :warnings => Website.format_markdown_for_html(error) }
             end
           end
         rescue Exception => ex

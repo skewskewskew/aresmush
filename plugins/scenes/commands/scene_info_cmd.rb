@@ -7,7 +7,7 @@ module AresMUSH
       
       def parse_args
         if (cmd.args =~ /\=/)
-          args = cmd.parse_args(ArgParser.arg1_equals_arg2)
+          args = cmd.parse_args(ArgParser.arg1_equals_optional_arg2)
           self.scene_num = integer_arg(args.arg1)
           self.value = args.arg2
         else
@@ -15,11 +15,7 @@ module AresMUSH
           self.value = cmd.args
         end
         self.setting = cmd.switch.downcase
-      end
-      
-      def required_args
-        [ self.value ]
-      end
+      end      
       
       def handle
         Scenes.with_a_scene(self.scene_num, client) do |scene|
@@ -28,10 +24,16 @@ module AresMUSH
             return
           end
 
-          if (self.setting != "summary" && self.setting != "limit")
-            self.value = self.value.titlecase
+          requires_value = ['privacy', 'icdate', 'type', 'pacing']
+          if (requires_value.include?(self.setting) && !self.value) 
+            client.emit_failure t('dispatcher.invalid_syntax', :cmd => "scene/#{setting}")
+            return
           end
 
+          if (self.setting != "summary" && self.setting != "limit")
+            self.value = self.value ? self.value.titlecase : nil
+          end
+          
           case self.setting
           when "privacy"
             success = set_privacy(scene)
@@ -53,7 +55,14 @@ module AresMUSH
           when "type"
             success = set_type(scene)
             
-          when "limit"
+          when "pacing"
+            success = set_pacing(scene)
+            
+          when "warning"
+            scene.update(content_warning: self.value)
+            success = true
+            
+          when "limit", "note", "notes"
             scene.update(limit: self.value.downcase == "none" ? nil : self.value)
             success = true
           end
@@ -72,7 +81,7 @@ module AresMUSH
         
         is_private = self.value == "Private"
         
-        if (is_private && scene.room.room_type == "IC")
+        if (is_private && scene.room && scene.room.room_type == "IC")
           client.emit_failure t('scenes.private_scene_in_public_room')
         end
         
@@ -91,6 +100,18 @@ module AresMUSH
         end
         
         scene.update(scene_type: self.value)
+        return true
+      end
+      
+      def set_pacing(scene)        
+        pacing = Scenes.scene_pacing.select { |p| p.downcase.start_with?(self.value.downcase)}.first
+        if (!pacing)
+          client.emit_failure t('scenes.invalid_scene_pacing', 
+          :types => Scenes.scene_pacing.join(", "))
+          return false
+        end
+        
+        scene.update(scene_pacing: pacing)
         return true
       end
 

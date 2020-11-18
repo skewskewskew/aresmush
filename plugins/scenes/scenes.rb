@@ -74,13 +74,13 @@ module AresMUSH
           end
         when "addchar", "removechar"
           return SceneCharCmd
-        when "addpose"
-          return SceneAddPoseCmd
+        when "emit"
+          return SceneEmitCmd
         when "home"
           return SceneHomeCmd
         when "join"
           return SceneJoinCmd
-        when "location", "privacy", "summary", "title", "type", "icdate", "plot", "limit"
+        when "location", "privacy", "summary", "title", "type", "icdate", "plot", "limit", "notes", "note", "pacing", "warning"
           return SceneInfoCmd
         when "delete"
           return SceneDeleteCmd
@@ -201,12 +201,14 @@ module AresMUSH
         return GetScenesRequestHandler
       when "sceneLocations"
         return GetSceneLocationsHandler
-      when "sceneTypes"
-        return GetSceneTypesRequestHandler
+      when "sceneOptions"
+        return GetSceneOptionsRequestHandler
       when "searchScenes"
         return SearchScenesRequestHandler
       when "switchPoseOrder"
         return SwitchPoseOrderRequestHandler
+      when "unsharedScenes"
+        return UnsharedScenesRequestHandler
       when "unwatchScene"
         return UnwatchSceneRequestHandler
       when "watchScene"

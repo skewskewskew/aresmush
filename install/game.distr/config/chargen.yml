@@ -78,10 +78,10 @@ chargen:
       help: groups
     ranks:
       help: ranks
-    background:
-      help: backgrounds
     abilities:
       help: skills
+    background:
+      help: backgrounds
     desc:
       help: descriptions
     hooks:
@@ -102,5 +102,10 @@ chargen:
   welcome_message: |-
     Please welcome %{name}, our latest %{position} to be approved!
 
+    Profile: %{profile_link}
+
     RP Hooks:
     %{rp_hooks}
+  permissions:
+    manage_apps: Approve and reject character apps.
+    view_bgs: Can view other characters' backgrounds

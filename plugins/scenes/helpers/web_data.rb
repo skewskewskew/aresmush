@@ -4,11 +4,12 @@ module AresMUSH
     def self.build_scene_pose_web_data(pose, viewer, live_update = false)
       {
         char: { name: pose.character ? pose.character.name : t('global.deleted_character'), 
+                nick: pose.character ? pose.character.nick : t('global.deleted_character'), 
                 icon: Website.icon_for_char(pose.character),
                 id: pose.character ? pose.character.id : 0 }, 
         order: pose.order, 
         id: pose.id,
-        timestamp: OOCTime.local_long_timestr(viewer, pose.created_at),
+        timestamp: OOCTime.local_short_date_and_time(viewer, pose.created_at),
         is_setpose: pose.is_setpose,
         is_system_pose: pose.is_system_pose?,
         restarted_scene_pose: pose.restarted_scene_pose,
@@ -27,6 +28,7 @@ module AresMUSH
           .sort_by {|p| p.name }
           .map { |p| { 
             name: p.name, 
+            nick: p.nick,
             id: p.id, 
             icon: Website.icon_for_char(p), 
             status: Website.activity_status(p),
@@ -61,6 +63,7 @@ module AresMUSH
         is_private: scene.private_scene,
         participants: participants,
         scene_type: scene.scene_type ? scene.scene_type.titlecase : 'unknown',
+        scene_pacing: scene.scene_pacing,
         can_edit: viewer && Scenes.can_edit_scene?(viewer, scene),
         can_delete: Scenes.can_delete_scene?(viewer, scene),
         is_watching: viewer && scene.watchers.include?(viewer),
@@ -90,8 +93,9 @@ module AresMUSH
         icdate: scene.icdate,
         likes: scene.likes,
         participants: scene.participants.to_a.sort_by { |p| p.name }.map { |p| 
-          { name: p.name, id: p.id, icon: Website.icon_for_char(p) }},
+          { name: p.name, nick: p.nick, id: p.id, icon: Website.icon_for_char(p) }},
         scene_type: scene.scene_type ? scene.scene_type.titlecase : 'Unknown',
+        scene_pacing: scene.scene_pacing,
         limit: scene.limit
         }
       end
@@ -131,6 +135,13 @@ module AresMUSH
       is_setpose = pose_type == 'setpose'
       is_gmpose = pose_type == 'gm'
       is_ooc = pose_type == 'ooc'
+      
+      if (pose.start_with?("/"))
+        return {
+          command: pose.after("/").before(" "),
+          args: pose.after(" ")
+        }
+      end
       
       command = ((pose.split(" ").first) || "").downcase
       is_emit = false

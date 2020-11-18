@@ -8,15 +8,16 @@ module AresMUSH
     attribute :completed, :type => DataType::Boolean
     attribute :content_warning
     
-    collection :scenes, "AresMUSH::Scene"
     set :storytellers, "AresMUSH::Character"
     
     ## DEPRECATED!  No longer used.
     reference :storyteller, "AresMUSH::Character"
+    collection :scenes, "AresMUSH::Scene"
     
+    before_delete :on_delete
     
     def sorted_scenes
-      self.scenes.to_a.sort_by { |s| s.icdate }
+      self.plot_links.map { |p| p.scene }.sort_by { |s| s.icdate }
     end
     
     def start_date
@@ -31,6 +32,14 @@ module AresMUSH
     
     def is_open?
       !self.completed
+    end
+    
+    def plot_links
+      PlotLink.find_by_plot(self)
+    end
+    
+    def on_delete
+      self.plot_links.each { |p| p.delete }
     end
   end
 end

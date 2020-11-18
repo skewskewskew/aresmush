@@ -1,14 +1,12 @@
 module AresMUSH
   module Scenes
     
-    def self.can_manage_scene?(actor, scene)
-      return false if !actor
-      actor.has_permission?("manage_scenes")
+    def self.can_manage_scenes?(actor)
+      actor && actor.has_permission?("manage_scenes")
     end
     
     def self.can_control_npcs?(actor)
-      return false if !actor
-      actor.has_permission?("control_npcs")
+      actor && actor.has_permission?("control_npcs")
     end
     
 
@@ -24,15 +22,16 @@ module AresMUSH
     def self.can_edit_scene?(actor, scene)
       return false if !actor
       return true if scene.owner == actor
-      return true if Scenes.can_manage_scene?(actor, scene)
+      if (scene.shared)
+        return true if Scenes.can_manage_scenes?(actor)
+      end
       scene.participants.include?(actor)
     end
     
     def self.can_delete_scene?(actor, scene)
       return false if !actor
-      real_poses = scene.scene_poses.select { |p| !p.is_ooc }
-      return true if (scene.owner == actor && (real_poses.count == 0) && !scene.scene_log)
-      return true if Scenes.can_manage_scene?(actor, scene)
+      real_poses = scene.scene_poses.select { |p| p.is_real_pose? }
+      return true if (scene.owner == actor && (real_poses.count == 0) && !scene.shared)
       return false
     end
     

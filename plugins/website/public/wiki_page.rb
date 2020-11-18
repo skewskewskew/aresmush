@@ -51,7 +51,7 @@ module AresMUSH
     end
     
     def heading
-      self.title ? self.title : self.name.titleize
+      !self.title.blank? ? self.title : self.name.titleize
     end
     
     def current_version
@@ -60,6 +60,11 @@ module AresMUSH
     
     def sorted_versions
       self.wiki_page_versions.to_a.sort_by { |v| v.created_at }
+    end
+    
+    def last_edited
+      ver = self.current_version 
+      ver ? ver.created_at : self.updated_at
     end
     
     def text

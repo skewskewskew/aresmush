@@ -15,6 +15,7 @@ en:
         config_sections: "Config Sections"
         config_section: "Config Section: %{name}"
         config_cron_title: "Configured Cron Jobs"
+        config_cron_subtitle: "                               Day      DayOfWeek    Hour         Minute"
         invalid_config_section: "That config section does not exist."
         loading_plugin_please_wait: "Plugin '%{name}' loading.  Please wait..."
         invalid_plugin_name: "Plugin names may not contain spaces or special characters."
@@ -105,4 +106,4 @@ en:
         error_installing_theme: "Error installing theme %{name}. Error: %{error}"
         theme_installed: "Theme %{name} installed. Please check the readme file at %{url} for any additional instructions."
         
-        mismatched_versions: "Your game and webportal versions are mismatched.  Maybe something went awry with the upgrade."
+        mismatched_versions: "Your game and webportal versions are mismatched.  Try reloading the page or clearing your browser cache. If the problem persists, there may be an upgrade issue."

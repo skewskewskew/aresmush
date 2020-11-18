@@ -13,6 +13,15 @@ module AresMUSH
       l(lt, format: Global.read_config("datetime", "long_date_format"))
     end
     
+    def self.local_short_date_and_time(viewer, datetime)
+      return "" if !datetime
+      lt = localtime(viewer, datetime)
+      date = l(lt, format: Global.read_config("datetime", "short_date_format"))
+      time = l(lt, format: Global.read_config("datetime", "time_format"))
+      "#{date} #{time}"
+    end
+    
+    
     def self.localtime(viewer, datetime)
       return "" if !datetime
       setting = viewer ? viewer.timezone : nil
@@ -53,6 +62,20 @@ module AresMUSH
       formatted_time = l(time, format: format)
       
       "#{formatted_time.strip} #{timezone}"
+    end
+    
+    def self.timezone_names
+      Timezone.names
+    end
+    
+    def self.set_timezone(char, zone)
+      zone = OOCTime.convert_timezone_alias(zone)
+      if (!OOCTime.timezone_names.include?(zone))
+        return t('time.invalid_timezone')
+      end
+      
+      char.update(ooctime_timezone: zone)
+      return nil
     end
   end
 end

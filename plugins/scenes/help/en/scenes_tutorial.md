@@ -1,6 +1,6 @@
 ---
 toc: 4 - Writing the Story
-summary: Starting scenes.
+summary: Understanding the scene system.
 order: 1
 tutorial: true
 aliases:
@@ -38,7 +38,17 @@ A scene can either be open (anyone's invited) or private.  Scenes on the grid ar
 
 > **Note:** Ares has no built-in commands to support admins spying on players.  Just as with any online service, though, **any** data transmitted to the server and/or stored in the database is ultimately accessible to the game owner and anyone they choose to share it with.  See [Privacy](/help/privacy).
 
-An open scene can include a 'limited participation' notice. You can use this to note that a scene is open only to certain types of characters (Imperials only, Viper Pilots only, etc.), only a certain number of characters, or even to note that players can just come and watch. This is an advisory only--the scene is still open in all meaningful respects, it just alerts players that there may be some conditions to participating.
+An open scene can include a note if there are any special considerations - like if a scene is open only to certain types of characters (Imperials only, Viper Pilots only, etc.), only a certain number of characters, or even to note that players can just come and watch. This is an advisory only--the scene is still open in all meaningful respects, it just alerts players that there may be some conditions to participating.
+
+## Scene Pacing
+
+MUSHes have traditionally been focused around live, synchronous RP, with players all being online together. With the web portal, Ares supports more varied playstyles. You can specify a **Pacing** for your scene to let other players know what to expect before they join.
+
+* **Traditional**: Live, synchronous RP with poses coming minutes apart. (Default Setting)
+* **Distracted**: RP that is still synchronous, but with longer time between poses due to work or other distractions.
+* **Asynchronous**: RP with poses coming in at various times, possibly in different timezones or schedules, or even over multiple days.
+
+If you wish to add extra detail about your scene's pacing, use the scene notes field.
 
 ## Joining Scenes
 
@@ -85,3 +95,5 @@ Through the web portal, you can create "plots", which are a way to organize rela
 [Scene Commands](/help/scenes)
 [Posing](/help/posing)
 [Pose Order](/help/pose_order)
+[Pose Formatting](/help/pose_format)
+[Out-of-Character Remarks](/help/ooc)

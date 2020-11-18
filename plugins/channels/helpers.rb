@@ -1,8 +1,7 @@
 module AresMUSH
   module Channels
     def self.can_manage_channels?(actor)
-      return false if !actor
-      actor.has_permission?("manage_channels")
+      actor && actor.has_permission?("manage_channels")
     end
     
     def self.get_channel_options(char, channel)
@@ -28,13 +27,30 @@ module AresMUSH
       if (intersection.empty?)
         return nil
       end
-      intersection = intersection.map { |c| c.display_name(false) }
+      intersection = intersection.map { |c| Channels.display_name(other_char, c, false) }
       Channels.name_with_markers(intersection.join(", "))
     end
     
     def self.announce_enabled?(char, channel)
       options = Channels.get_channel_options(char, channel)
       options ? options.announce : false
+    end
+    
+    def self.channel_color(char, channel)
+      color = channel.color
+      if (char)
+        options = Channels.get_channel_options(char, channel)
+        if (options && !options.color.blank?)
+          color = options.color
+        end
+      end
+      color
+    end    
+    
+    def self.display_name(char, channel, include_markers = true)
+      color = Channels.channel_color(char, channel)
+      display = "#{color}#{channel.name}%xn"
+      include_markers ? Channels.name_with_markers(display) : display
     end
     
     def self.name_with_markers(name)
@@ -68,22 +84,34 @@ module AresMUSH
       online_chars
     end
     
-    def self.emit_to_channel(channel, original_msg, title = nil)
+    def self.emit_to_channel(channel, original_msg, enactor = nil, title = nil)
+      enactor = enactor || Game.master.system_character
       original_msg = "#{original_msg}".gsub(/%R/i, " ")
-      channel.add_to_history "#{title} #{original_msg}"
+      original_msg = "#{original_msg}".gsub(/[\r\n]/i, " ")
+
+      channel.add_to_history "#{title} #{original_msg}", enactor
       channel.characters.each do |c|
         if (!Channels.is_muted?(c, channel))
           
           title_display = (title && Channels.show_titles?(c, channel)) ? "#{title} " : ""
-          formatted_msg = "#{channel.display_name} #{title_display}#{original_msg}"
+          formatted_msg = "#{Channels.display_name(c, channel)} #{title_display}#{original_msg}"
           
           Login.emit_if_logged_in(c, formatted_msg)
         end
       end
       
       formatted_msg = "#{title} #{original_msg}"
-      web_message = "#{channel.name.downcase}|#{channel.name}|#{Website.format_markdown_for_html(formatted_msg)}"
-      Global.client_monitor.notify_web_clients(:new_chat, web_message) do |char|
+      
+      data = {
+        id: channel.id,
+        key: channel.name.downcase,
+        title: channel.name,
+        author: {name: enactor.name, icon: Website.icon_for_char(enactor), id: enactor.id},
+        message: Website.format_markdown_for_html(formatted_msg),
+        is_page: false
+      }
+      
+      Global.client_monitor.notify_web_clients(:new_chat, "#{data.to_json}", true) do |char|
         char && Channels.is_on_channel?(char, channel) && !Channels.is_muted?(char, channel)
       end
     end
@@ -91,7 +119,7 @@ module AresMUSH
     def self.pose_to_channel(channel, enactor, msg, title)
       name = enactor.ooc_name
       formatted_msg = PoseFormatter.format(name, msg)
-      Channels.emit_to_channel channel, formatted_msg, title
+      Channels.emit_to_channel channel, formatted_msg, enactor, title
       Channels.notify_discord_webhook(channel, msg, enactor)
       return formatted_msg
     end
@@ -126,13 +154,13 @@ module AresMUSH
     def self.can_join_channel?(char, channel)
       return true if channel.join_roles.empty?
       return true if Channels.can_manage_channels?(char)
-      return char.has_any_role?(channel.join_roles)
+      return char && char.has_any_role?(channel.join_roles)
     end
     
     def self.can_talk_on_channel?(char, channel)
       return true if channel.talk_roles.empty?
       return true if Channels.can_manage_channels?(char)
-      return char.has_any_role?(channel.talk_roles)
+      return char && char.has_any_role?(channel.talk_roles)
     end
     
     def self.with_an_enabled_channel(name, client, enactor, &block)
@@ -259,7 +287,7 @@ module AresMUSH
     end
     
     def self.report_channel_abuse(enactor, channel, messages, reason) 
-      messages = messages.map { |m| "  [#{OOCTime.local_long_timestr(enactor, m['timestamp'])}] #{channel.display_name} #{m['message']}"}.join("%R")
+      messages = messages.map { |m| "  [#{OOCTime.local_long_timestr(enactor, m.created_at)}] #{Channels.display_name(nil, channel)} #{m.message}"}.join("%R")
 
       body = t('channels.channel_reported_body', :name => channel.name, :reporter => enactor.name)
       body << reason
@@ -292,12 +320,72 @@ module AresMUSH
         icon = Website.icon_for_char(enactor) 
         icon_url = icon ? "#{Game.web_portal_url}/game/uploads/#{icon}" :
              "https://www.gravatar.com/avatar/#{Digest::MD5.hexdigest(enactor.name)}?d=#{gravatar_style}"
-        resp = Net::HTTP.post_form(URI.parse(url), { 
+        connector = RestConnector.new(url)
+        connector.post( "", { 
           content: formatted_msg, 
           username: name,
-          avatar_url: icon_url })
-        # JSON.parse(resp.body)
+          avatar_url: icon_url } )
       end
     end
+    
+    def self.build_channel_web_data(channel, enactor)
+      {
+        key: channel.name.downcase,
+        title: channel.name,
+        desc: channel.description,
+        enabled: Channels.is_on_channel?(enactor, channel),
+        can_join: Channels.can_join_channel?(enactor, channel),
+        can_talk: Channels.can_talk_on_channel?(enactor, channel),
+        muted: Channels.is_muted?(enactor, channel),
+        last_activity: channel.last_activity,
+        is_recent: channel.last_activity ? (Time.now - channel.last_activity < (86400 * 2)) : false,
+        is_page: false,
+        who: Channels.channel_who(channel).map { |w| {
+         name: w.name,
+         ooc_name: w.ooc_name,
+         icon: Website.icon_for_char(w),
+         muted: Channels.is_muted?(w, channel),
+         status: Website.activity_status(w)
+        }},
+        messages: Channels.is_on_channel?(enactor, channel) ? channel.sorted_channel_messages.map { |m| {
+          message: Website.format_markdown_for_html(m.message),
+          id: m.id,
+          timestamp: OOCTime.local_short_date_and_time(enactor, m.created_at),
+          author: {
+            name: m.author_name,
+            icon: m.author ? Website.icon_for_char(m.author) : nil }
+            }} : [],
+      }
+    end
+    
+    def self.build_page_web_data(thread, enactor)
+      {
+         key: thread.id,
+         title: thread.title_without_viewer(enactor),
+         enabled: true,
+         can_join: true,
+         can_talk: true,
+         muted: false,
+         is_page: true,
+         is_unread: Page.is_thread_unread?(thread, enactor),
+         last_activity: thread.last_activity,
+         is_recent: thread.last_activity ? (Time.now - thread.last_activity < (86400 * 2)) : false,
+         who: thread.characters.map { |c| {
+          name: c.name,
+          ooc_name: c.ooc_name,
+          icon: Website.icon_for_char(c),
+          muted: false
+         }},
+         messages: thread.sorted_messages.map { |p| {
+            message: Website.format_markdown_for_html(p.message),
+            id: p.id,
+            timestamp: OOCTime.local_short_date_and_time(enactor, p.created_at),
+            author: {
+              name: p.author_name,
+              icon: p.author ? Website.icon_for_char(p.author) : nil }
+            }}
+        }
+    end
+                      
   end
 end

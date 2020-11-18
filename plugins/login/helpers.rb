@@ -4,15 +4,15 @@ module AresMUSH
     
     def self.can_access_email?(actor, model)
       return true if actor == model
-      actor.has_permission?("manage_login")
+      actor && actor.has_permission?("manage_login")
     end
     
     def self.can_manage_login?(actor)
-      actor.has_permission?("manage_login")
+      actor && actor.has_permission?("manage_login")
     end
     
     def self.can_login?(actor)
-      actor.has_permission?("login")
+      actor && actor.has_permission?("login")
     end
     
     def self.creation_allowed?
@@ -25,6 +25,7 @@ module AresMUSH
     
     def self.can_boot?(actor)
       # Limit to admins or approved non-admins to prevent trolls from using it.
+      return false if !actor
       not_new = actor.has_permission?("manage_login") || actor.is_approved?
       actor.has_permission?("boot") && not_new
     end
@@ -120,7 +121,11 @@ module AresMUSH
     def self.update_blacklist
       return if (!Global.read_config("sites", "ban_proxies"))
       Global.logger.debug "Updating blacklist from rhost.com."
-      blacklist = Net::HTTP.get('rhostmush.com', '/blacklist.txt')
+
+      connector = HttpConnector.new      
+      resp = connector.get('http://rhostmush.com/blacklist.txt')
+      blacklist = resp.body
+
       if (blacklist)
         blacklist = blacklist.split("\n").select { |b| b != "ip" && !b.empty? }.join("\n")
         File.open(File.join(AresMUSH.game_path, 'text', 'blacklist.txt'), 'w') do |f|
@@ -144,7 +149,9 @@ module AresMUSH
         return { status: 'error',  error: Login.site_blocked_message }
       end
 
-      if (char.handle && AresCentral.is_registered?)
+      password_ok = char.compare_password(password)
+
+      if (!password_ok && char.handle && AresCentral.is_registered?)
         AresMUSH.with_error_handling(nil, "AresCentral forgotten password.") do
           Global.logger.info "Checking AresCentral for forgotten password."
 
@@ -164,7 +171,7 @@ module AresMUSH
         return { status: 'error', error: t('login.password_locked') }
       end
         
-      if (!char.compare_password(password))
+      if (!password_ok)
         Global.logger.info "Failed login attempt #{char.login_failures} to #{char.name} from #{ip_addr}."
         char.update(login_failures: char.login_failures + 1)
         return { status: 'error', error: t('login.password_incorrect') }
@@ -178,6 +185,30 @@ module AresMUSH
       Global.read_config("sites", "ban_proxies") ? 
          t('login.site_blocked_proxies') : 
          t('login.site_blocked')
+    end
+    
+    def self.is_email_valid?(email)
+      return true if email.blank?
+      if email !~ /\A[^@\s]+@([^@\s]+\.)+[^@\s]+\z/
+        return false
+      end
+      return true
+    end
+    
+    def self.name_taken?(name, enactor = nil)
+      return nil if !name
+
+      found = Character.find_one_by_name(name)
+      
+      # They can have their own name
+      return nil if enactor && found == enactor
+      
+      # Only look for an exact name match.
+      if (found && (found.name_upcase == name.upcase || found.alias_upcase == name.upcase))
+        return t('validation.char_name_taken')
+      end
+      
+      return nil
     end
   end
 end

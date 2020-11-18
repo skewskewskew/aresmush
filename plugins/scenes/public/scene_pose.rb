@@ -16,7 +16,7 @@ module AresMUSH
     
     def move_to_history
       entries = self.history || []
-      entries << "#{Time.now} #{character ? character.name : 'Author Deleted'} -- #{pose}"
+      entries << "#{Time.now} #{character ? character.name : t('global.deleted_character')} -- #{pose}"
       self.update(history: entries)
     end
     
@@ -40,10 +40,18 @@ module AresMUSH
       self.character.is_admin? || self.character.is_playerbit?
     end
     
+    def is_real_pose?
+      return true if self.restarted_scene_pose
+      return false if self.is_deleted
+      return false if self.is_ooc
+      return false if self.is_system_pose?
+      return true
+    end
+    
     def can_edit?(actor)
       return false if !actor
       return false if self.is_system_pose?
-      return true if Scenes.can_manage_scene?(actor, self.scene)
+      return true if Scenes.can_manage_scenes?(actor)
       return true if actor == self.character
       return true if self.restarted_scene_pose && Scenes.can_edit_scene?(actor, self.scene)
       return false

@@ -34,8 +34,8 @@ en:
         scene_nag:  "There's no scene running here.  Starting a scene will enable repose, playing from the web portal, and other features.  Just do `scene/start` if you want to start one."
         open: "Open"
         private: "Private"
-        limited: "Limited"
-        limited_participation: "Limited Participation"
+        limited: "Open*"
+        scene_notes: "Notes"
         scene_already_going: "There's already a scene going in this room.  You have to stop it first."
         private_scene_in_public_room: "Having a private scene on the public grid is poor form, unless of course you're in a private residence."
         amended_pose: "%{name} has amended %{pronoun} last pose."
@@ -44,17 +44,19 @@ en:
         
         scene_types: "Available scene types are: %{types}."
         invalid_scene_type: "That is not a valid scene type.  Try one of these: %{types}."
+        invalid_scene_pacing: "That is not a valid pacing type. Try one of these: %{types}."
         invalid_plot: "That is not a valid plot name or number."
         invalid_icdate_format: "Please use the form yyyy-mm-dd."
         cant_share_until_completed: "You can't share a scene until it's stopped."
         cant_collapse_until_completed: "You can't do that until the scene is stopped."
         grid_location_change_warning: "This is a grid room.  You can note a location change in the scene log, but new arrivals may think you're still in the original location.  It may be better to stop the scene and restart it in a temp room."
         
-        scene_delete_warn: "Your scene %{id} (title: %{title}) will be deleted in a few days if it it remains unshared. %{url}"
+        scene_delete_warn: "Scene %{id} will be deleted soon. Save or share it."
         scene_delete_warn_subject: "Unshared Scene Deletion"
         
         logging_not_enabled: "The scene log is not on."
         log_cleared: "You clear the scene log."
+        log_cleared_by: "%{name} has cleared the scene log."
         scene_log_title: "Scene Log %{id}"
         no_scene_in_ooc_room: "Scenes are not available in OOC rooms."
         logging_already_on: "The scene log is already on."
@@ -149,3 +151,10 @@ en:
         
         scene_reported_body: "%{reporter} has reported scene #%{scene_num}.%R%RReason:%R"
         scene_reported_title: "Scene Reported"
+        no_pose_given: "You didn't specify a message."
+        
+        content_warning: "Content Warning:"
+        open_scenes: "Open Scenes"
+        open_or_my_scenes: "Open/My Scenes"
+        private_scenes: "Private Scenes"
+        my_scenes: "My Scenes"

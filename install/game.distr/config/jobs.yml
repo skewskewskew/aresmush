@@ -48,3 +48,9 @@ jobs:
       color: "%xx%xh"
   system_category: SYS
   trouble_category: ALERT
+  permissions:
+    access_jobs: Allows non-admins to access jobs in categories allowed for their
+      roles.
+  responses:
+  - name: Received
+    text: Your job has been received. We'll get to it soon.

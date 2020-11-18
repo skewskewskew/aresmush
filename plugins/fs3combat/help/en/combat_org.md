@@ -11,6 +11,7 @@ aliases:
 - combat_attackmod
 - combat_defensemod
 - combat_lethalmod
+- combat_initmod
 - combat_team
 - combat_stop
 - combat_newturn
@@ -33,7 +34,7 @@ This is a quick reference for combat organizer commands.
 `combat/join <list of names>=<combat #>[/<type>]` - Adds people to combats.
   Use `combat/types` to see available types and their associated gear.
 
-`combat/summary` - Summary of everyone's skills/gear/etc. Also shows who hasn't posed or set their actions.
+`combat/summary [<name>]` - Summary of everyone's skills/gear/etc. Also shows who hasn't posed or set their actions. Specifying a name will match only combatants whose names start with the given text.
 `combat/idle <name>` - Sets someone as idle/not idle.  They won't be counted in pose tracking until you use the command on them again.
 
 `combat/npc <name>=<level>` - Adjusts a NPC's skill level.  See `combat/npcs` for a list of options.
@@ -41,9 +42,10 @@ This is a quick reference for combat organizer commands.
 
 `combat/unko` - Un-KO's someone who shouldn't have been
 
-`combat/attackmod <name>=<modifier>` - Gives the combatant a modifier to attack
-`combat/defensemod <name>=<modifier>` - Gives the combatant a modifier to defend
-`combat/lethalmod <name>=<modifier>` - Gives the combatant a modifier to lethality on damage TAKEN
+`combat/attackmod <name>=<modifier>` - Gives the combatant a modifier to attack.
+`combat/defensemod <name>=<modifier>` - Gives the combatant a modifier to defend.
+`combat/lethalmod <name>=<modifier>` - Gives the combatant a modifier to lethality on damage TAKEN.
+`combat/initmod <name>=<modifier>` - Gives the combatant a modifier to initiative.
 `combat/ammo <name>=<ammo>` - Adjusts remaining ammo.
 
 `combat/transfer <name>` - Transfer organizer powers to another person in combat.

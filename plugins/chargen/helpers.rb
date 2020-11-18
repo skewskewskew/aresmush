@@ -1,7 +1,7 @@
 module AresMUSH
   module Chargen
     def self.can_approve?(actor)
-      actor.has_permission?("manage_apps")
+      Chargen.can_manage_apps?(actor)
     end
     
     def self.bg_app_review(char)
@@ -10,7 +10,11 @@ module AresMUSH
     end
     
     def self.can_manage_bgs?(actor)
-      actor.has_permission?("manage_apps")
+      actor && actor.has_permission?("manage_apps")
+    end     
+
+    def self.can_manage_apps?(actor)
+      actor && actor.has_permission?("manage_apps")
     end     
     
     def self.can_view_bgs?(actor)
@@ -18,18 +22,17 @@ module AresMUSH
       Chargen.can_manage_bgs?(actor) || actor.has_permission?("view_bgs")
     end      
     
-    def self.can_edit_bg?(actor, model, client)
-      if (model.is_approved? && !Chargen.can_manage_bgs?(actor))
-        client.emit_failure t('chargen.cannot_edit_after_approval')
-        return false
+    def self.check_can_edit_bg(actor, model)    
+      return t('chargen.cannot_edit_bg') if !actor
+      if (actor != model && !Chargen.can_manage_bgs?(actor))
+        return t('chargen.cannot_edit_bg')
       end
       
-      if (actor != model && !Chargen.can_manage_bgs?(actor))
-        client.emit_failure t('chargen.cannot_edit_bg')
-        return false
+      if (model.is_approved? && !Chargen.can_manage_bgs?(actor))
+        return t('chargen.cannot_edit_after_approval')
       end
 
-      return true
+      return nil
     end
     
     def self.unsubmit_app(char)
@@ -121,8 +124,8 @@ module AresMUSH
         end
       end
       
-      errors = Profile::CustomCharFields.save_fields_from_chargen(char, chargen_data)
-      if (errors.any?)
+      errors = Profile::CustomCharFields.save_fields_from_chargen(char, chargen_data) || []
+      if (errors.class == Array && errors.any?)
         alerts.concat errors
       end
       
@@ -192,7 +195,7 @@ module AresMUSH
        return nil
      end
      
-     def self.build_app_review_info(char)
+     def self.build_app_review_info(char, enactor)
        abilities_app = FS3Skills.is_enabled? ? MushFormatter.format(FS3Skills.app_review(char)) : nil
        demographics_app = MushFormatter.format Demographics.app_review(char)
        bg_app = MushFormatter.format Chargen.bg_app_review(char)
@@ -214,7 +217,7 @@ module AresMUSH
          id: char.id,
          job: char.approval_job ? char.approval_job.id : nil,
          custom: custom_app,
-         allow_web_submit: Global.read_config("chargen", "allow_web_submit")
+         allow_web_submit: (char == enactor) && Global.read_config("chargen", "allow_web_submit")
        }
      end
   end

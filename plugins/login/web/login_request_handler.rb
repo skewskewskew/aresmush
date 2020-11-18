@@ -11,7 +11,11 @@ module AresMUSH
         return error if error
         
         if (!char)
+          if (name && name.downcase.start_with?("guest"))
+            return { error: t('login.no_guest_webportal') }
+          else
            return { error: t('login.invalid_name_or_password') }
+          end
         elsif (char.is_guest?)
           return { error: t('login.no_guest_webportal') }
         end
@@ -46,7 +50,8 @@ module AresMUSH
           id: char.id,
           is_approved: char.is_approved?,
           is_admin: char.is_admin?,
-          is_coder: char.is_coder?
+          is_coder: char.is_coder?,
+          is_wiki_mgr: (!char.is_admin? && Website.can_manage_theme?(char))
         }
       end
     end

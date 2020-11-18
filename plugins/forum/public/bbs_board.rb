@@ -24,7 +24,7 @@ module AresMUSH
     end
       
     def sorted_posts
-      bbs_posts.to_a.sort_by { |p| p.created_at }
+      bbs_posts.to_a.sort_by { |p| [ p.is_pinned? ? 0 : 1, p.created_at ] }
     end
     
     def set_upcase_name
@@ -62,6 +62,18 @@ module AresMUSH
       
       sorted_posts = self.bbs_posts.to_a.sort_by { |p| p.last_updated }
       sorted_posts[-1]
+    end
+    
+    def set_roles(role_names, role_type)
+      role_list = role_type == :read ? self.read_roles : self.write_roles
+      new_roles = []
+      role_names.each do |r|
+        role = Role.find_one_by_name(r)
+        if (role)
+          new_roles << role
+        end
+      end
+      role_list.replace new_roles
     end
   end
 end

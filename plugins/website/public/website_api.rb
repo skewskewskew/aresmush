@@ -11,6 +11,7 @@ module AresMUSH
       text
     end
       
+    # Weird edge case that you might want to ignore markdown formatting but still do MUSH format codes.
     def self.format_output_for_html(output)
       return nil if !output
         
@@ -27,6 +28,14 @@ module AresMUSH
     def self.format_input_for_html(input)
       return nil if !input
       input.gsub(/%r/i, "\n")
+    end
+    
+    def self.avatar_info(char)
+      {
+        name: char.name,
+        nick: char.nick,
+        icon: Website.icon_for_char(char)
+      }
     end
     
     def self.icon_for_char(char)
@@ -48,21 +57,15 @@ module AresMUSH
     end
     
     def self.web_char_marker
-      "[Web]"
+      "[#{t('global.web_status')}]"
     end
     
     def self.activity_status(char)
-      client = Login.find_client(char)
-      if (client)
-        return 'inactive' if char.is_afk?
-        return Status.is_idle?(client) ? 'game-inactive' : 'game-active'
-      end
-      client = Login.find_web_client(char)
-      if (!client)
-        return 'offline'
-      end
-      
-      return Status.is_idle?(client) ? 'web-inactive' : 'web-active'
+      Status.activity_status(char)
+    end
+    
+    def self.can_manage_theme?(actor)
+      actor && actor.has_permission?("manage_theme")
     end
   end
 end

@@ -1,8 +1,9 @@
 module AresMUSH
   module Events
     def self.can_manage_events?(actor)
-      actor.has_permission?("manage_events")
+      actor && actor.has_permission?("manage_events")
     end
+
     def self.ical_path
       File.join(AresMUSH.game_path, 'calendar.ics')
     end
@@ -66,12 +67,13 @@ module AresMUSH
       end
     end
     
-    def self.create_event(enactor, title, datetime, desc, warning = nil)
+    def self.create_event(enactor, title, datetime, desc, warning, tags)
       event = Event.create(title: title, 
       starts: datetime, 
       description: desc,
       character: enactor,
-      content_warning: warning)
+      content_warning: warning,
+      tags: tags)
         
       Channels.announce_notification(t('events.event_created_notification', :title => title))
       Events.events_updated
@@ -91,11 +93,12 @@ module AresMUSH
       Events.events_updated
     end
    
-    def self.update_event(event, enactor, title, datetime, desc, warning = nil)
+    def self.update_event(event, enactor, title, datetime, desc, warning, tags)
       event.update(title: title)
       event.update(starts: datetime)
       event.update(description: desc)
       event.update(content_warning: warning)
+      event.update(tags: tags)
      
       Events.events_updated
       message = t('events.event_updated_notification', :title => title)
@@ -119,7 +122,7 @@ module AresMUSH
           f.puts "BEGIN:VEVENT\r\n"
           f.puts "UID:#{event.ical_uid}\r\n"
           f.puts "DTSTART:#{Events.format_timestamp(event.starts)}\r\n"
-          f.puts "DTSTAMP:#{Events.format_timestamp(event.created_at)}\r\n"
+          f.puts "DTSTAMP:#{Events.format_timestamp(event.updated_at)}\r\n"
           f.puts "SUMMARY:#{event.title}\r\n"
           f.puts "DESCRIPTION:#{event.description.gsub("%r", "\r\n  ")}\r\n"
           f.puts "END:VEVENT\r\n"

@@ -23,12 +23,10 @@ module AresMUSH
       
       def handle
         Channels.with_an_enabled_channel(self.name, client, enactor) do |channel|
-          total_messages = channel.messages.count
-          start_message = [ (total_messages - self.num_messages), 0 ].max
-          messages = channel.messages[start_message, total_messages]
-          list = messages.map { |m| " [#{OOCTime.local_long_timestr(enactor, m['timestamp'])}] #{channel.display_name}  #{m['message']}"}
+          messages = channel.sorted_channel_messages.last(self.num_messages)
+          list = messages.map { |m| " [#{OOCTime.local_long_timestr(enactor, m.created_at)}] #{Channels.display_name(enactor, channel)}  #{m.message}"}
           template = BorderedListTemplate.new list, 
-              t('channels.recall_history', :name => channel.display_name(false)), 
+              t('channels.recall_history', :name => Channels.display_name(enactor, channel, false)), 
               "%R%ld%R#{t('channels.more_on_portal')}"
           client.emit template.render
         end
